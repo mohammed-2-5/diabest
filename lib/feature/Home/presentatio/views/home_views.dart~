@@ -1,0 +1,16 @@
+
+import 'package:diiabest/feature/Home/presentatio/widgets/custom_home.dart';
+import 'package:flutter/material.dart';
+class HomeViews extends StatelessWidget {
+  const HomeViews({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SafeArea(
+          child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child:CustomHome(),)
+        )) ;
+  }
+}

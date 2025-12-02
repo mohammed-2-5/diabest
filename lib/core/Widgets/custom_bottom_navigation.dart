@@ -1,0 +1,135 @@
+import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:diiabest/core/Utils/App-colors.dart';
+import 'package:diiabest/feature/Home/presentatio/views/home_views.dart';
+import 'package:diiabest/feature/contact_us/Presentation/views/contact_us.dart';
+import 'package:diiabest/feature/doctor/presentation/views/profile_doctor.dart';
+import 'package:diiabest/feature/doctors_patient/Presentation/view/doctor_patient.dart';
+import 'package:diiabest/feature/my_watch/presentation/views/my_watch.dart';
+import 'package:diiabest/feature/profile/Presentation/view/profile_view.dart';
+import 'package:diiabest/feature/auth/auth_cubit/auth_cubit.dart';
+
+import '../../feature/auth/Presentation/Views/sign_in.dart';
+import '../../feature/auth/auth_cubit/autch_state.dart';
+import '../../feature/profile/cubit/profile_cubit.dart';
+
+class CustomBtnNavigation extends StatefulWidget {
+  const CustomBtnNavigation({super.key});
+
+  @override
+  State<CustomBtnNavigation> createState() => _CustomBtnNavigationState();
+}
+
+class _CustomBtnNavigationState extends State<CustomBtnNavigation> {
+  late PersistentTabController _controller;
+  bool showNavBar = true; // Controls navbar visibility
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PersistentTabController(initialIndex: 0);
+
+    // Set initial navbar state based on current user
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authCubit = BlocProvider.of<AuthCubit>(context);
+      setState(() {
+        showNavBar = authCubit.currentUser != null; // Show navbar if user exists
+      });
+    });
+  }
+
+  List<Widget> _buildScreens() {
+    return [
+      const HomeViews(),
+      const DoctorPatientView(),
+      BluetoothApp(),
+      const ContactUsView(),
+      BlocProvider.of<AuthCubit>(context).currentUser != null &&
+          BlocProvider.of<AuthCubit>(context).currentUser.role == "Doctor"
+          ? const ProfileDoctorView()
+          : const ProfileView(),
+    ];
+  }
+  List<PersistentBottomNavBarItem> _navBarsItems() {
+    return [
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.home),
+        title: "Home",
+        activeColorPrimary: AppColors.blue,
+        inactiveColorPrimary: AppColors.black1,
+        activeColorSecondary: AppColors.white,
+        textStyle: TextStyle(fontSize: 16.sp),
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.medical_services),
+        title: "Doctor",
+        activeColorPrimary: AppColors.blue,
+        activeColorSecondary: AppColors.white,
+        inactiveColorPrimary: AppColors.black1,
+        textStyle: TextStyle(fontSize: 16.sp),
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.watch),
+        activeColorSecondary: AppColors.white,
+        title: "Diabest",
+        activeColorPrimary: AppColors.blue,
+        inactiveColorPrimary: AppColors.black1,
+        textStyle: TextStyle(fontSize: 16.sp),
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.contact_phone_sharp),
+        title: "Contact Us",
+        activeColorSecondary: AppColors.white,
+        activeColorPrimary: AppColors.blue,
+        inactiveColorPrimary: AppColors.black1,
+        textStyle: TextStyle(fontSize: 16.sp),
+      ),
+      PersistentBottomNavBarItem(
+        icon: const Icon(Icons.person),
+        title: "Profile",
+        activeColorPrimary: AppColors.blue,
+        inactiveColorPrimary: AppColors.black1,
+        activeColorSecondary: AppColors.white,
+        textStyle: TextStyle(fontSize: 16.sp),
+
+      ),
+    ];
+  }
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is SignOut) {
+          setState(() {
+            showNavBar = false; // Hide navbar when user logs out
+          });
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInView()),
+                (route) => false,
+          );
+        } else if (state is SigninSuccessState) {
+          setState(() {
+            showNavBar = true; // Show navbar when user logs in
+          });
+        }
+      },
+      child: PersistentTabView(
+        context,
+        controller: _controller,
+        screens: _buildScreens(),
+        items: _navBarsItems(),
+        confineToSafeArea: true,
+        backgroundColor: AppColors.white,
+        handleAndroidBackButtonPress: true,
+        resizeToAvoidBottomInset: true,
+        stateManagement: true,
+        navBarHeight: showNavBar ? 60.h : 0, // Hide navbar when `showNavBar` is false
+        navBarStyle: NavBarStyle.style7,
+      ),
+    );
+  }
+}
